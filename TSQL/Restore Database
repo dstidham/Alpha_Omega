@@ -1,0 +1,8 @@
+RESTORE DATABASE [databasename] 
+FROM  DISK = N'c:\system\backup.bak' 
+WITH  FILE = 1,  
+MOVE N'backup' TO N'c:\databasename.mdf',  
+MOVE N'backup_log' TO N'c:\databasename.ldf',  
+NOUNLOAD,  
+REPLACE,  
+STATS = 5

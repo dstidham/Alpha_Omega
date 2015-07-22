@@ -1,0 +1,65 @@
+#============================================================
+# Restore a Database using PowerShell and SQL Server SMO
+# Restore to the a new database name, specifying new mdf and ldf
+# Donabel Santos
+#============================================================
+ 
+#clear screen
+cls
+ 
+#load assemblies
+[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | Out-Null
+#Need SmoExtended for backup
+[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended") | Out-Null
+[Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") | Out-Null
+[Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoEnum") | Out-Null
+ 
+$dir = "Z:\Insite.Commerce.AkronHardware\FULL"
+#$targetdir = "J:\akron\toBackup_Akron_dave.bak"
+$latest = Get-ChildItem -Path $dir | Sort-Object LastAccessTime -Descending | Select-Object -First 1 
+ 
+$backupFile = $dir + "\" + $latest
+ 
+#we will query the database name from the backup header later
+$server = New-Object ("Microsoft.SqlServer.Management.Smo.Server") "(local)"
+$backupDevice = New-Object("Microsoft.SqlServer.Management.Smo.BackupDeviceItem") ($backupFile, "File")
+$smoRestore = new-object("Microsoft.SqlServer.Management.Smo.Restore")
+ 
+#restore settings
+$smoRestore.NoRecovery = $false;
+$smoRestore.ReplaceDatabase = $true;
+$smoRestore.Action = "Database"
+$smoRestorePercentCompleteNotification = 10;
+$smoRestore.Devices.Add($backupDevice)
+ 
+#get database name from backup file
+$smoRestoreDetails = $smoRestore.ReadBackupHeader($server)
+ 
+#display database name
+"Database Name from Backup Header : " +$smoRestoreDetails.Rows[0]["DatabaseName"]
+ 
+#give a new database name
+#$smoRestore.Database =$smoRestoreDetails.Rows[0]["DatabaseName"] + "_Copy"
+$smoRestore.Database =$smoRestoreDetails.Rows[0]["DatabaseName"] + "Insite.Akron.Copy"
+ 
+#specify new data and log files (mdf, ndf and ldf)
+$smoRestoreFile = New-Object("Microsoft.SqlServer.Management.Smo.RelocateFile")
+$smoRestoreNDF = New-Object("Microsoft.SqlServer.Management.Smo.RelocateFile")
+$smoRestoreLog = New-Object("Microsoft.SqlServer.Management.Smo.RelocateFile")
+ 
+#the logical file names should be the logical filename stored in the backup media
+$targetdir = "J:\akron"
+$smoRestoreFile.LogicalFileName = $smoRestoreDetails.Rows[0]["DatabaseName"]
+#$smoRestoreFile.PhysicalFileName = $server.Information.MasterDBPath + "\" + $smoRestore.Database + "_Data.mdf"
+$smoRestoreFile.PhysicalFileName = $targetdir + "\" + $smoRestore.Database + "_Data.mdf"
+$smoRestoreNDF.LogicalFileName = $smoRestoreDetails.Rows[0]["DatabaseName"] + "_FT"
+$smoRestoreNDF.PhysicalFileName = $targetdir  + "\" + $smoRestore.Database + "_FT.ndf"
+$smoRestoreLog.LogicalFileName = $smoRestoreDetails.Rows[0]["DatabaseName"] + "_Log"
+$smoRestoreLog.PhysicalFileName = $targetdir + "\" + $smoRestore.Database + "_Log.ldf"
+
+$smoRestore.RelocateFiles.Add($smoRestoreFile)
+$smoRestore.RelocateFiles.Add($smoRestoreNDF)
+$smoRestore.RelocateFiles.Add($smoRestoreLog)
+ 
+#restore database
+$smoRestore.SqlRestore($server)

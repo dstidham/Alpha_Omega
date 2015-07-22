@@ -1,0 +1,14 @@
+:Variables
+SET DatabaseBackupPath="Z:\backup folder\FULL"
+
+echo.
+echo Restore WebServer Database
+FOR /F "delims=|" %%I IN ('DIR "%DatabaseBackupPath%\*.bak" /B /O:D') DO SET NewestFile=%%I
+
+sqlcmd -U <username> -P <password> -d master -Q ^
+"RESTORE DATABASE [Dave_Test] ^
+FROM  DISK = N'%DatabaseBackupPath%\%NewestFile%' ^
+WITH  FILE = 1,  ^
+MOVE N'Example_CS' TO N'C:\Program Files\Microsoft SQL Server\MSSQL.1\MSSQL\Example.mdf',  ^
+MOVE N'Example_CS_log' TO N'C:\Program Files\Microsoft SQL Server\MSSQL.1\MSSQL\Example_1.LDF',  ^
+NOUNLOAD,  STATS = 10"

@@ -1,0 +1,67 @@
+#RestoreDatabase.ps1 
+#Performs a restore of a single database. 
+#Accepts server name as an input parameter. 
+#Accepts database path AND name as an input parameter. 
+#Assumes new database name is the same as the name
+#in the backup file! 
+#Load the DLLs if not using SQLPS 
+[System.Reflection.Assembly]::LoadWithPartialName(
+   'Microsoft.SqlServer.SMO') | out-null 
+[System.Reflection.Assembly]::LoadWithPartialName(
+   'Microsoft.SqlServer.SmoExtended') | out-null
+
+#input parameters 
+$servername = $args[0] 
+$backupFile = $args[1]
+
+#we'll get the "proper" db name below. otherwise,
+#load server, backup, and restore objects 
+$server = new-object(
+  "Microsoft.SqlServer.Management.Smo.Server") $servername 
+$dbRestore = new-object(
+  "Microsoft.SqlServer.Management.Smo.Restore")
+
+#settings for the restore 
+$dbRestore.Action = "Database" 
+$dbRestore.NoRecovery = $false; 
+$dbRestore.ReplaceDatabase = $true; 
+$dbRestorePercentCompleteNotification = 5; 
+$dbRestore.Devices.AddDevice($backupFile, 
+  [Microsoft.SqlServer.Management.Smo.DeviceType]::File)
+
+#get the db name 
+$dbRestoreDetails = $dbRestore.ReadBackupHeader($server)
+
+#print database name 
+"Database Name from Backup File : " 
+  +$dbRestoreDetails.Rows[0]["DatabaseName"]
+
+
+
+#give a new database name 
+$dbRestore.Database =$dbRestoreDetails.Rows[0]["DatabaseName"]
+
+#specify new data and log files (mdf and ldf) 
+$dbRestoreFile = new-object(
+  "Microsoft.SqlServer.Management.Smo.RelocateFile") 
+$dbRestoreLog = new-object(
+  "Microsoft.SqlServer.Management.Smo.RelocateFile")
+
+#set file names; use the default database directory 
+$dbRestoreFile.LogicalFileName = 
+  $dbRestoreDetails.Rows[0]["DatabaseName"] 
+$dbRestoreFile.PhysicalFileName = 
+  $server.Information.MasterDBPath + 
+  "\" + $dbRestore.Database + "_Data.mdf" 
+$dbRestoreLog.LogicalFileName = 
+  $dbRestoreDetails.Rows[0]["DatabaseName"] + "_Log" 
+$dbRestoreLog.PhysicalFileName = 
+  $server.Information.MasterDBLogPath + 
+  "\" + $dbRestore.Database + "_Log.ldf" 
+$dbRestore.RelocateFiles.Add($dbRestoreFile) 
+$dbRestore.RelocateFiles.Add($dbRestoreLog)
+
+#execute the restore! 
+$dbRestore.SqlRestore($server) 
+write-host "Restore of " 
+  $dbRestoreDetails.Rows[0]["DatabaseName"] "Complete"
