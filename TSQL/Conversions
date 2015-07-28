@@ -1,0 +1,2 @@
+Convert the division of two integers into a float for percentages by casting the numerator as a float:
+(Cast(isco12m.ISCOrders12m as float)/orderlast12months.OrderCountLast12Months) as ISCOrderPercentLast12Months
