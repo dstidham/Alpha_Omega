@@ -1,0 +1,3 @@
+Use Coalesce in conjunction with Nullif to remove errors:
+
+COALESCE((pcl.ProductCountLast12Months-pcc.ProductCountComp12Months)/NULLIF(pcc.ProductCountComp12Months,0),0) as ProductCountChange12Months
