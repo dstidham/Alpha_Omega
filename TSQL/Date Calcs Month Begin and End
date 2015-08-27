@@ -2,3 +2,6 @@ SELECT DATEADD(s,0,DATEADD(mm, DATEDIFF(m,0,GETDATE())-12,0)) as TY_BegDate
 , DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,GETDATE()),0)) as TY_EndDate
 , DATEADD(s,0,DATEADD(mm, DATEDIFF(m,0,GETDATE())-24,0)) as LY_BegDate
 , DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,GETDATE())-12,0)) as LY_EndDate
+, DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,GETDATE()),0)) as LastDay_PreviousMonth
+, DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,GETDATE())+1,0)) as LastDay_CurrentMonth
+, DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,GETDATE())+2,0)) as LastDay_NextMonth
