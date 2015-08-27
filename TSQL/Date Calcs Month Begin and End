@@ -5,3 +5,4 @@ SELECT DATEADD(s,0,DATEADD(mm, DATEDIFF(m,0,GETDATE())-12,0)) as TY_BegDate
 , DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,GETDATE()),0)) as LastDay_PreviousMonth
 , DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,GETDATE())+1,0)) as LastDay_CurrentMonth
 , DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,GETDATE())+2,0)) as LastDay_NextMonth
+, DATEADD(month, DATEDIFF(month, 0, cal.[date]), 0) AS month_start
